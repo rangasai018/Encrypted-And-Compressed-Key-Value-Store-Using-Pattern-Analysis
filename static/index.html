@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypted Key-Value Store</title>
+    <link rel="stylesheet" href="/static/style.css?v=2">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>KV Store</h1>
+                </div>
+                <p class="subtitle">Cloud-Ready</p>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-tab="operations">
+                    <i class="fas fa-database"></i>
+                    Operations
+                </a>
+                <a href="#" class="menu-item" data-tab="keys">
+                    <i class="fas fa-key"></i>
+                    Keys
+                </a>
+                <a href="#" class="menu-item" data-tab="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+                <a href="#" class="menu-item" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <div class="status-dot online"></div>
+                    <span>Online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="content-header">
+                <div>
+                    <h1 id="page-title">
+                        <i class="fas fa-database"></i>
+                        Operations
+                    </h1>
+                    <p id="page-description">Store, retrieve, and manage your encrypted key-value data</p>
+                </div>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="username-display">Loading...</span>
+                    <span class="user-role" id="user-role">User</span>
+                    <button onclick="logout()" class="btn btn-sm btn-danger" style="margin-left: 15px;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Operations Tab -->
+                <div id="operations" class="tab-content active">
+                    <div class="quick-actions">
+                        <h2>Quick Actions</h2>
+                        <div class="action-grid">
+                            <div class="action-card" onclick="navigateToOperation('store')">
+                                <i class="fas fa-plus-circle"></i>
+                                <h3>POST - Store</h3>
+                                <p>Store encrypted data</p>
+                            </div>
+                            <div class="action-card" onclick="navigateToOperation('retrieve')">
+                                <i class="fas fa-search"></i>
+                                <h3>GET - Retrieve</h3>
+                                <p>Get stored data</p>
+                            </div>
+                            <div class="action-card" onclick="navigateToOperation('delete')">
+                                <i class="fas fa-trash"></i>
+                                <h3>DELETE - Remove</h3>
+                                <p>Delete stored data</p>
+                            </div>
+                            <div class="action-card" onclick="switchTab('keys')">
+                                <i class="fas fa-list"></i>
+                                <h3>Browse Keys</h3>
+                                <p>View all stored keys</p>
+                            </div>
+                            <div class="action-card" onclick="switchTab('analytics')">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>Analytics</h3>
+                                <p>View usage patterns</p>
+                            </div>
+                            <div class="action-card" onclick="switchTab('analytics'); showPatternLogs()">
+                                <i class="fas fa-search-chart"></i>
+                                <h3>Pattern Analysis</h3>
+                                <p>View detailed pattern logs</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="page-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-plus-circle"></i> Store Data</h2>
+                            <p>Store encrypted and compressed key-value pairs</p>
+                        </div>
+                        <div class="form">
+                            <form id="storeForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="key"><i class="fas fa-key"></i> Key</label>
+                                        <input type="text" id="key" name="key" placeholder="e.g., user:123" required>
+                                        <small>Unique identifier for your data</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="value"><i class="fas fa-file-text"></i> Value (JSON)</label>
+                                        <textarea id="value" name="value" rows="4" placeholder='{"name": "John", "email": "john@example.com"}' required></textarea>
+                                        <small>JSON object or string data</small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label><i class="fas fa-shield-alt"></i> Security & Compression</label>
+                                        <div class="options-grid">
+                                            <div class="option-card">
+                                                <input type="checkbox" id="encrypt" checked>
+                                                <div class="option-content">
+                                                    <i class="fas fa-lock"></i>
+                                                    <div>
+                                                        <h4>Encrypt</h4>
+                                                        <p>AES encryption for security</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="option-card">
+                                                <input type="checkbox" id="compress" checked>
+                                                <div class="option-content">
+                                                    <i class="fas fa-compress"></i>
+                                                    <div>
+                                                        <h4>Compress</h4>
+                                                        <p>LZ4 compression for efficiency</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Store Data
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="clearForm('storeForm')">
+                                        <i class="fas fa-eraser"></i> Clear
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="storeResult" class="result"></div>
+                        </div>
+                    </div>
+
+                    <div class="page-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-search"></i> Retrieve Data</h2>
+                            <p>Get data by key with decryption and decompression</p>
+                        </div>
+                        <div class="form">
+                            <form id="retrieveForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="retrieveKey"><i class="fas fa-key"></i> Key</label>
+                                        <input type="text" id="retrieveKey" name="retrieveKey" placeholder="Enter key to retrieve" required>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-secondary">
+                                        <i class="fas fa-search"></i> Retrieve
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="retrieveResult" class="result"></div>
+                        </div>
+                    </div>
+
+                    <div class="page-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-trash"></i> Delete Data</h2>
+                            <p>Remove data from the store</p>
+                        </div>
+                        <div class="form">
+                            <form id="deleteForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="deleteKey"><i class="fas fa-key"></i> Key</label>
+                                        <input type="text" id="deleteKey" name="deleteKey" placeholder="Enter key to delete" required>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="deleteResult" class="result"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keys Tab -->
+                <div id="keys" class="tab-content">
+                    <div class="page-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-key"></i> All Keys</h2>
+                            <p>Browse and manage your stored keys</p>
+                        </div>
+                        <div class="bulk-actions">
+                            <button class="btn btn-primary" onclick="loadKeys()">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="keysList" class="keys-grid"></div>
+                        <div id="keysLoading" class="loading-placeholder hidden">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading keys...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analytics" class="tab-content">
+                    <div class="page-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-chart-line"></i> Pattern Analysis</h2>
+                            <p>View usage patterns and performance metrics</p>
+                        </div>
+                        <div class="form-actions">
+                            <button id="analyzeBtn" class="btn btn-info">
+                                <i class="fas fa-chart-line"></i> Analyze Patterns
+                            </button>
+                            <button class="btn btn-secondary" onclick="loadStats()">
+                                <i class="fas fa-info-circle"></i> System Stats
+                            </button>
+                        </div>
+                        <div id="analysisResult" class="result"></div>
+                        <div id="statsResult" class="result"></div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settings" class="tab-content">
+                    <div class="page-card">
+                        <div class="card-header">
+                            <h2><i class="fas fa-cog"></i> Settings</h2>
+                            <p>Configure your key-value store</p>
+                        </div>
+                        <div class="settings-content">
+                            <div class="security-grid">
+                                <div class="security-card">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <h3>Encryption</h3>
+                                    <p>AES-256 encryption with PBKDF2 key derivation</p>
+                                </div>
+                                <div class="security-card">
+                                    <i class="fas fa-compress"></i>
+                                    <h3>Compression</h3>
+                                    <p>LZ4, Gzip, and Zlib compression algorithms</p>
+                                </div>
+                                <div class="security-card">
+                                    <i class="fas fa-database"></i>
+                                    <h3>Backend</h3>
+                                    <p id="backend-info">SQLite (local) or Redis (cloud)</p>
+                                </div>
+                                <div class="security-card">
+                                    <i class="fas fa-chart-line"></i>
+                                    <h3>Analytics</h3>
+                                    <p>Real-time pattern analysis and recommendations</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js?v=3"></script>
+</body>
+</html>

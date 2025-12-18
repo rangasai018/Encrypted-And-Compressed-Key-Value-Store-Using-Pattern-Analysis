@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:7
+    container_name: kv-redis
+    ports:
+      - "6379:6379"
+  api:
+    build: .
+    container_name: kv-api
+    ports:
+      - "8000:8000"
+    environment:
+      - KV_BACKEND=redis
+      - REDIS_URL=redis://redis:6379/0
+      - KV_STORE_PASSWORD=change_me_in_prod
+    depends_on:
+      - redis
+    # optional: mount data if using sqlite
+    # volumes:
+    #   - ./data:/app/data
+
+
