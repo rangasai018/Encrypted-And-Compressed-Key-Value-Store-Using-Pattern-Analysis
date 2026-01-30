@@ -8,8 +8,8 @@ from typing import Optional, Dict, Any, List
 import uvicorn
 from datetime import datetime
 import json
-import webbrowser
-import threading
+# import webbrowser
+# import threading
 import time
 import os
 
@@ -274,20 +274,27 @@ async def get_store_stats(current_user: Dict[str, Any] = Depends(get_current_use
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-def open_browser():
-    """Open browser after a short delay"""
-    time.sleep(2)  # Wait for server to start
-    webbrowser.open("http://localhost:8000")
+# def open_browser():
+#     """Open browser after a short delay"""
+#     time.sleep(2)  # Wait for server to start
+#     webbrowser.open("http://localhost:8000")
+
+# if __name__ == "__main__":
+#     # Start browser in a separate thread
+#     browser_thread = threading.Thread(target=open_browser)
+#     browser_thread.daemon = True
+#     browser_thread.start()
+    
+#     print("🚀 Starting Encrypted Key-Value Store...")
+#     print("🌐 Beautiful web interface will open automatically at: http://localhost:8000")
+#     print("📊 API documentation available at: http://localhost:8000/docs")
+#     print("🛑 Press CTRL+C to stop the server")
+    
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 if __name__ == "__main__":
-    # Start browser in a separate thread
-    browser_thread = threading.Thread(target=open_browser)
-    browser_thread.daemon = True
-    browser_thread.start()
-    
-    print("🚀 Starting Encrypted Key-Value Store...")
-    print("🌐 Beautiful web interface will open automatically at: http://localhost:8000")
-    print("📊 API documentation available at: http://localhost:8000/docs")
-    print("🛑 Press CTRL+C to stop the server")
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000))
+    )
