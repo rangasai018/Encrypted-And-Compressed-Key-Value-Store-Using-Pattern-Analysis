@@ -25,18 +25,13 @@ async function checkAuthStatus() {
     const token = localStorage.getItem('session_token');
     if (token) {
         try {
-            //const response = await fetch('http://localhost:8000/me', {
-            //     headers: {
-            //         'Authorization': `Bearer ${token}`
-            //     }
-            // });
-            const response = await fetch('/me', {
-    headers: {
-        'Authorization': `Bearer ${token}`
-    }
-});
-
+            const response = await fetch('http://localhost:8000/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             
+
         if (response.ok) {
             // Already logged in, redirect to main app
             window.location.href = '/app';
@@ -61,26 +56,17 @@ async function handleLogin(e) {
     try {
         showLoading('loginResult');
         
-        // const response = await fetch('http://localhost:8000/login', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({
-        //         username: username,
-        //         password: password
-        //     })
-        // });
-        const response = await fetch('/login', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        username: username,
-        password: password
-    })
-});
+        const response = await fetch('http://localhost:8000/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password
+            })
+        });
+        
 
         const result = await response.json();
         
@@ -122,28 +108,18 @@ async function handleRegister(e) {
     try {
         showLoading('loginResult');
         
-        // const response = await fetch('http://localhost:8000/register', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({
-        //         username: username,
-        //         email: email,
-        //         password: password
-        //     })
-        // });
-        const response = await fetch('/register', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        username: username,
-        email: email,
-        password: password
-    })
-});
+        const response = await fetch('http://localhost:8000/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password
+            })
+        });
+        
 
         
         const result = await response.json();
