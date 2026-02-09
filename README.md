@@ -374,3 +374,54 @@ curl http://localhost:8000/keys `
 - If Redis container is stopped, the app will fall back to SQLite backend (if `KV_BACKEND` is not set)
 - Recently, unused artifacts were cleaned; only files used by the app remain
 - Virtual environment is recommended but not strictly necessary (can install packages globally)
+
+
+## 📊 Results and Analysis
+
+The proposed **Encrypted and Compressed Key-Value Store** was evaluated under real-time execution conditions to analyze performance, storage efficiency, and access behavior. The evaluation focuses on both **system performance metrics** and **pattern analysis insights**.
+
+🔹 Evaluation Parameters
+
+The system was analyzed using the following parameters:
+
+* Data Size (KB)
+* Encryption Time (ms)
+* Decryption Time (ms)
+* Compression Ratio
+* Store Latency (ms)
+* Retrieve Latency (ms)
+* Storage Overhead (%)
+* Operation Frequency (Count)
+
+
+🔹 Graphical Analysis Summary
+
+* Operation Distribution:
+  Read operations were observed to be more frequent than write and delete operations, which is typical for key-value storage systems.
+
+* Daily Access Patterns:
+  The system successfully captured variations in access frequency across different dates, helping identify peak and low usage periods.
+
+* Top Accessed Keys:
+  Certain keys were accessed more frequently, demonstrating the effectiveness of the pattern analysis module in identifying access hotspots without revealing encrypted data.
+
+* Response Time Analysis:
+  Minimum and average response times remained low, while maximum response times occurred during larger data operations involving encryption and compression. Overall performance remained within acceptable limits.
+
+
+🔹 Key Observations
+
+* Compression effectively reduces storage overhead despite encryption metadata.
+* Encryption and compression introduce marginal latency but do not affect usability.
+* Pattern analysis enables secure monitoring without compromising data confidentiality.
+* The system is suitable for real-time secure storage applications.
+
+## 📸 Implementation Screens
+
+The repository also includes screenshots demonstrating:
+
+* User authentication (login/register)
+* Secure data storage with encryption and compression
+* Data retrieval and deletion
+* Pattern analysis dashboard
+* System performance statistics
