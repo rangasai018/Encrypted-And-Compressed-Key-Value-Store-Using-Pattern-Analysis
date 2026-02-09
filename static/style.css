@@ -542,6 +542,65 @@ body.login-body {
     transform: translateY(-2px);
 }
 
+/* Analysis charts grid - 4 graphs */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin: 20px 0;
+}
+
+.chart-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.chart-card h4 {
+    margin: 0 0 16px 0;
+    font-size: 1rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+.chart-card h4 i {
+    margin-right: 8px;
+    color: #007bff;
+}
+
+.chart-container {
+    position: relative;
+    height: 240px;
+    width: 100%;
+}
+
+.chart-container canvas {
+    max-height: 240px;
+}
+
+.chart-no-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #6c757d;
+    font-style: italic;
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Pattern logs styling */
 .pattern-logs {
     margin-top: 20px;

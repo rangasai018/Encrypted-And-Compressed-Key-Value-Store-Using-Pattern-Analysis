@@ -530,86 +530,160 @@ async function handleDelete(e) {
     }
 }
 
+// Store chart instances to destroy when re-rendering
+let analysisCharts = [];
+
+function destroyAnalysisCharts() {
+    analysisCharts.forEach(chart => { if (chart) chart.destroy(); });
+    analysisCharts = [];
+}
+
+function renderAnalysisCharts(patterns) {
+    if (typeof Chart === 'undefined') return;
+    destroyAnalysisCharts();
+
+    const chartColors = {
+        read: 'rgba(0, 123, 255, 0.8)',
+        write: 'rgba(40, 167, 69, 0.8)',
+        delete: 'rgba(220, 53, 69, 0.8)',
+        bar: ['#007bff', '#17a2b8', '#20c997', '#28a745', '#ffc107', '#fd7e14', '#e83e8c', '#6f42c1']
+    };
+
+    // 1. Operation Distribution - Doughnut
+    const opDistCtx = document.getElementById('chartOperationDist');
+    if (opDistCtx) {
+        const opData = patterns.operation_distribution || {};
+        const opLabels = Object.keys(opData).map(k => k.charAt(0).toUpperCase() + k.slice(1));
+        const opValues = Object.values(opData);
+        const opColors = opLabels.map(l => chartColors[l.toLowerCase()] || chartColors.bar[0]);
+        if (opValues.length > 0 && opValues.some(v => v > 0)) {
+            analysisCharts.push(new Chart(opDistCtx, {
+                type: 'doughnut',
+                data: { labels: opLabels, datasets: [{ data: opValues, backgroundColor: opColors, borderWidth: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            }));
+        } else {
+            opDistCtx.parentElement.innerHTML = '<p class="chart-no-data">No operation data yet</p>';
+        }
+    }
+
+    // 2. Daily Access Patterns - Bar
+    const dailyCtx = document.getElementById('chartDailyAccess');
+    if (dailyCtx) {
+        const dailyData = patterns.daily_access_patterns || {};
+        const dailyLabels = Object.keys(dailyData).sort().slice(-14);
+        const dailyValues = dailyLabels.map(d => dailyData[d] || 0);
+        if (dailyLabels.length > 0) {
+            analysisCharts.push(new Chart(dailyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dailyLabels,
+                    datasets: [{ label: 'Accesses', data: dailyValues, backgroundColor: chartColors.bar[0], borderRadius: 6 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            }));
+        } else {
+            dailyCtx.parentElement.innerHTML = '<p class="chart-no-data">No daily data (SQLite only)</p>';
+        }
+    }
+
+    // 3. Top Accessed Keys - Bar
+    const topKeysCtx = document.getElementById('chartTopKeys');
+    if (topKeysCtx) {
+        const topKeys = patterns.top_accessed_keys || [];
+        const keyLabels = topKeys.map(k => k.key);
+        const keyValues = topKeys.map(k => k.access_count);
+        if (keyLabels.length > 0) {
+            analysisCharts.push(new Chart(topKeysCtx, {
+                type: 'bar',
+                data: {
+                    labels: keyLabels,
+                    datasets: [{ label: 'Access Count', data: keyValues, backgroundColor: chartColors.bar[2], borderRadius: 6 }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            }));
+        } else {
+            topKeysCtx.parentElement.innerHTML = '<p class="chart-no-data">No key access data yet</p>';
+        }
+    }
+
+    // 4. Response Time Stats - Bar (always show)
+    const rtCtx = document.getElementById('chartResponseTime');
+    if (rtCtx) {
+        const rt = patterns.response_time_stats || { avg_ms: 0, min_ms: 0, max_ms: 0 };
+        const rtLabels = ['Min (ms)', 'Avg (ms)', 'Max (ms)'];
+        const rtValues = [rt.min_ms || 0, rt.avg_ms || 0, rt.max_ms || 0];
+        analysisCharts.push(new Chart(rtCtx, {
+            type: 'bar',
+            data: {
+                labels: rtLabels,
+                datasets: [{ label: 'Response Time (ms)', data: rtValues, backgroundColor: [chartColors.bar[4], chartColors.bar[0], chartColors.bar[5]], borderRadius: 6 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        }));
+    }
+}
+
 async function showPatternLogs() {
     console.log('showPatternLogs() called');
     try {
         showLoading('analysisResult');
         
-        // Call the analysis endpoint to get detailed logs
         const response = await fetch('http://localhost:8000/analysis', {
             headers: getAuthHeaders()
         });
         const result = await response.json();
         
         if (response.ok) {
-            // Display detailed pattern logs using the actual data structure
             const analysisResult = document.getElementById('analysisResult');
             const patterns = result.access_patterns;
             
             analysisResult.innerHTML = `
                 <div class="analysis">
-                    <h3><i class="fas fa-list-alt"></i> Detailed Pattern Logs</h3>
+                    <h3><i class="fas fa-chart-line"></i> Pattern Analysis with Graphs</h3>
                     <p class="data-timestamp"><i class="fas fa-clock"></i> Data updated: ${new Date().toLocaleString()}</p>
+                    
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h4><i class="fas fa-chart-pie"></i> 1. Operation Distribution</h4>
+                            <div class="chart-container"><canvas id="chartOperationDist"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <h4><i class="fas fa-calendar-day"></i> 2. Daily Access Patterns</h4>
+                            <div class="chart-container"><canvas id="chartDailyAccess"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <h4><i class="fas fa-key"></i> 3. Top Accessed Keys</h4>
+                            <div class="chart-container"><canvas id="chartTopKeys"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <h4><i class="fas fa-tachometer-alt"></i> 4. Response Time (ms)</h4>
+                            <div class="chart-container"><canvas id="chartResponseTime"></canvas></div>
+                        </div>
+                    </div>
+                    
                     <div class="pattern-logs">
-                        <h4><i class="fas fa-chart-pie"></i> Operation Distribution</h4>
-                        <div class="operation-stats">
-                            ${patterns.operation_distribution ? Object.entries(patterns.operation_distribution).map(([op, count]) => `
-                                <div class="operation-stat">
-                                    <span class="operation-label ${op}">${op.toUpperCase()}</span>
-                                    <span class="operation-count">${count} operations</span>
-                                </div>
-                            `).join('') : '<p>No operation data available</p>'}
-                        </div>
-
-                        <h4><i class="fas fa-calendar-day"></i> Daily Usage Pattern</h4>
-                        <div class="daily-pattern">
-                            ${patterns.daily_access_patterns && Object.keys(patterns.daily_access_patterns).length > 0 ?
-                                Object.entries(patterns.daily_access_patterns).map(([date, count]) => {
-                                    const maxDaily = Math.max(...Object.values(patterns.daily_access_patterns));
-                                    const pct = maxDaily > 0 ? (count / maxDaily) * 100 : 0;
-                                    return `
-                                        <div class="day-bar">
-                                            <span class="day-label">${date}</span>
-                                            <div class="bar" style="width: ${pct}%"></div>
-                                            <span class="count">${count}</span>
-                                        </div>
-                                    `;
-                                }).join('') : '<p>No daily usage data available</p>'}
-                        </div>
-                        
-                        <h4><i class="fas fa-key"></i> Key Access Details</h4>
-                        <div class="key-details">
-                            ${patterns.top_accessed_keys ? patterns.top_accessed_keys.map(keyData => `
-                                <div class="key-entry">
-                                    <span class="key-name">${keyData.key}</span>
-                                    <span class="access-count">${keyData.access_count} accesses</span>
-                                    ${keyData.last_access_date ? `
-                                        <span class="last-access">
-                                            <i class=\"fas fa-calendar\"></i> ${keyData.last_access_date}
-                                            <i class=\"fas fa-clock\"></i> ${keyData.last_access_time}
-                                        </span>
-                                    ` : ''}
-                                </div>
-                            `).join('') : '<p>No key access data available</p>'}
-                        </div>
-                        
                         <h4><i class="fas fa-tachometer-alt"></i> Performance Stats</h4>
                         <div class="performance-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Total Accesses:</span>
-                                <span class="stat-value">${patterns.total_accesses || 0}</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Unique Keys:</span>
-                                <span class="stat-value">${patterns.unique_keys_accessed || 0}</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Avg Response Time:</span>
-                                <span class="stat-value">${Math.round(patterns.response_time_stats?.avg_ms || 0)}ms</span>
-                            </div>
+                            <div class="stat-item"><span class="stat-label">Total Accesses:</span> <span class="stat-value">${patterns.total_accesses || 0}</span></div>
+                            <div class="stat-item"><span class="stat-label">Unique Keys:</span> <span class="stat-value">${patterns.unique_keys_accessed || 0}</span></div>
+                            <div class="stat-item"><span class="stat-label">Avg Response Time:</span> <span class="stat-value">${Math.round(patterns.response_time_stats?.avg_ms || 0)}ms</span></div>
                         </div>
 
-                        <h4><i class="fas fa-history"></i> Recent Access History (with Dates)</h4>
+                        <h4><i class="fas fa-history"></i> Recent Access History</h4>
                         <div class="recent-access-history">
                             ${patterns.recent_access_history && patterns.recent_access_history.length > 0 ? 
                                 patterns.recent_access_history.map(entry => `
@@ -617,18 +691,11 @@ async function showPatternLogs() {
                                         <div class="access-main">
                                             <span class="access-key">${entry.key}</span>
                                             <span class="access-operation ${entry.operation}">${entry.operation.toUpperCase()}</span>
-                                            <span class="access-datetime">
-                                                <i class="fas fa-calendar"></i> ${entry.date}
-                                                <i class="fas fa-clock"></i> ${entry.time}
-                                            </span>
+                                            <span class="access-datetime"><i class="fas fa-calendar"></i> ${entry.date} <i class="fas fa-clock"></i> ${entry.time}</span>
                                         </div>
                                         <div class="access-details">
-                                            <span class="access-duration">
-                                                <i class="fas fa-tachometer-alt"></i> ${entry.response_time_ms}ms
-                                            </span>
-                                            <span class="access-size">
-                                                <i class="fas fa-weight"></i> ${entry.data_size ? `${entry.data_size} bytes` : 'N/A'}
-                                            </span>
+                                            <span class="access-duration"><i class="fas fa-tachometer-alt"></i> ${entry.response_time_ms}ms</span>
+                                            <span class="access-size"><i class="fas fa-weight"></i> ${entry.data_size ? entry.data_size + ' bytes' : 'N/A'}</span>
                                         </div>
                                     </div>
                                 `).join('') : '<p>No recent access history available</p>'}
@@ -636,42 +703,20 @@ async function showPatternLogs() {
                     </div>
                 </div>
             `;
+            
+            setTimeout(() => renderAnalysisCharts(patterns), 50);
         } else {
-            showResult('analysisResult', {
-                success: false,
-                message: 'Failed to load pattern logs: ' + result.message
-            });
+            showResult('analysisResult', { success: false, message: 'Failed to load pattern logs: ' + result.message });
         }
     } catch (error) {
         console.error('Error loading pattern logs:', error);
-        showResult('analysisResult', {
-            success: false,
-            message: 'Error loading pattern logs: ' + error.message
-        });
+        showResult('analysisResult', { success: false, message: 'Error loading pattern logs: ' + error.message });
     }
 }
 
 async function handleAnalyze() {
     console.log('handleAnalyze() called');
-    try {
-        showLoading('analysisResult');
-        
-        const response = await fetch('http://localhost:8000/analysis', {
-            headers: getAuthHeaders()
-        });
-        const result = await response.json();
-        
-        if (response.ok) {
-            showAnalysisResult('analysisResult', result);
-        } else {
-            throw new Error('Failed to analyze patterns');
-        }
-    } catch (error) {
-        showResult('analysisResult', {
-            success: false,
-            message: 'Error analyzing patterns: ' + error.message
-        });
-    }
+    await showPatternLogs();
 }
 
 function showLoading(elementId) {
