@@ -31,6 +31,7 @@ async function checkAuthStatus() {
                 }
             });
             
+
         if (response.ok) {
             // Already logged in, redirect to main app
             window.location.href = '/app';
@@ -66,6 +67,7 @@ async function handleLogin(e) {
             })
         });
         
+
         const result = await response.json();
         
         if (result.success) {
@@ -117,6 +119,8 @@ async function handleRegister(e) {
                 password: password
             })
         });
+        
+
         
         const result = await response.json();
         
